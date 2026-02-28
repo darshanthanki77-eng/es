@@ -17,11 +17,16 @@ const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
+// Trust proxy for Vercel
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json());
 // CORS - allowed origins
 const allowedOrigins = [
     'https://smartseller.vercel.app',
+    'https://esseller.vercel.app',
+    'https://es-phi.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001',
 ];
@@ -30,18 +35,23 @@ app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (mobile apps, curl, Postman)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1) {
+
+        if (allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            // Log for debugging if origin is not allowed
+            console.log(`Origin ${origin} not allowed by CORS`);
+            callback(null, false);
         }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: true,
+    optionsSuccessStatus: 200 // Some legacy browsers crash on 204
 }));
 app.use(helmet({
     crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
 }));
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));

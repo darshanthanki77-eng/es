@@ -17,9 +17,9 @@ const getAvailableBalance = async (sellerIdRaw) => {
         ]);
         const rechargeMoney = rechargeResult.length > 0 ? rechargeResult[0].total : 0;
 
-        // 2. Package Money (Pending + Approved) -> Status 0 or 1
+        // 2. Package Money (Active only: status 1) — packages are auto-activated, no pending state
         const packageResult = await Package.aggregate([
-            { $match: { seller_id: sellerId, status: { $in: [0, 1] } } },
+            { $match: { seller_id: sellerId, status: 1 } },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
         const packageMoney = packageResult.length > 0 ? packageResult[0].total : 0;

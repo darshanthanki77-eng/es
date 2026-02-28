@@ -2,23 +2,15 @@ const Package = require('../models/Package');
 const Seller = require('../models/Seller');
 const asyncHandler = require('express-async-handler');
 
-// @desc    Get all packages
+// @desc    Get seller's packages
 // @route   GET /api/packages
 // @access  Private
 const getPackages = asyncHandler(async (req, res) => {
-    try {
-        const packages = await Package.find({ seller_id: req.user._id }).sort({ created_at: -1 });
-        res.json({
-            success: true,
-            packages
-        });
-    } catch (error) {
-        res.status(500);
-        throw new Error('Server Error: ' + error.message);
-    }
+    const packages = await Package.find({ seller_id: req.user._id }).sort({ created_at: -1 });
+    res.json({ success: true, packages });
 });
 
-// @desc    Purchase a package
+// @desc    Purchase & instantly activate a package (one-time, no pending)
 // @route   POST /api/packages/purchase
 // @access  Private
 const purchasePackage = asyncHandler(async (req, res) => {
@@ -31,14 +23,13 @@ const purchasePackage = asyncHandler(async (req, res) => {
         throw new Error('Seller not found');
     }
 
-    // 1. Verify Transaction Password (Must match registration password)
-    // Use seller.trans_password which is stored during signup
+    // 1. Verify Transaction Password
     if (!seller.trans_password || !(await seller.matchTransPassword(trans_password))) {
         res.status(400);
-        throw new Error('Invalid transaction password. Please use the password you set during registration.');
+        throw new Error('Invalid transaction password.');
     }
 
-    // 2. Package Mapping (Prices based on frontend UI)
+    // 2. Package Mapping
     const packageMapping = {
         'silver': { name: 'Starter Merchant', amount: 50, limit: 5 },
         'platinum': { name: 'Professional Seller', amount: 150, limit: 1000000 },
@@ -51,47 +42,45 @@ const purchasePackage = asyncHandler(async (req, res) => {
         throw new Error('Invalid package selected');
     }
 
-    // 3. Confirm Wallet Balance
+    // 3. Block if seller already has an ACTIVE package of ANY type
+    const existingActive = await Package.findOne({ seller_id: sellerId, status: 1 });
+    if (existingActive) {
+        res.status(400);
+        throw new Error(`You already have an active package (${existingActive.type}). A seller can only hold one active package at a time.`);
+    }
+
+    // 4. Check wallet balance
     const { getAvailableBalance } = require('../utils/wallet');
-    const balance = await getAvailableBalance(seller._id);
+    const balance = await getAvailableBalance(sellerId);
 
     if (balance < pkg.amount) {
         res.status(400);
-        throw new Error(`Insufficient funds. Plan cost is $${pkg.amount}, but your wallet has $${balance.toFixed(2)}.`);
+        throw new Error(`Insufficient funds. Package costs $${pkg.amount}, your balance is $${balance.toFixed(2)}.`);
     }
 
-    // 4. Record Transaction & Deduct
-    try {
-        // Create Package Activation Record
-        const lastRec = await Package.findOne().sort({ id: -1 });
-        const newId = lastRec && lastRec.id ? lastRec.id + 1 : 1;
+    // 5. Create package as INSTANTLY ACTIVE (status: 1) — no admin approval needed
+    const lastRec = await Package.findOne().sort({ id: -1 });
+    const newId = lastRec && lastRec.id ? lastRec.id + 1 : 1;
 
-        await Package.create({
-            id: newId,
-            seller_id: seller._id,
-            type: pkg.name,
-            amount: pkg.amount,
-            profit: '0',
-            product_limit: pkg.limit,
-            status: 0 // Pending Admin Approval
-        });
+    const newPackage = await Package.create({
+        id: newId,
+        seller_id: sellerId,
+        type: pkg.name,
+        amount: pkg.amount,
+        profit: '0',
+        product_limit: pkg.limit,
+        status: 1  // ✅ Directly ACTIVE — no pending, no admin approval
+    });
 
-        // The balance will dynamically lower since pending packages are subtracted from available balance
-        const newBalance = balance - pkg.amount;
+    // 6. Balance is automatically reduced (wallet.js subtracts status:1 packages)
+    const newBalance = balance - pkg.amount;
 
-        res.status(200).json({
-            success: true,
-            message: `${pkg.name} package requested successfully. Waiting for admin approval.`,
-            wallet_balance: newBalance
-        });
-    } catch (error) {
-        console.error('Package Purchase Error:', error);
-        res.status(500);
-        throw new Error('Transaction failed: ' + error.message);
-    }
+    res.status(200).json({
+        success: true,
+        message: `🎉 ${pkg.name} activated successfully! You can now list up to ${pkg.limit === 1000000 ? 'unlimited' : pkg.limit} products.`,
+        package: newPackage,
+        wallet_balance: newBalance
+    });
 });
 
-module.exports = {
-    getPackages,
-    purchasePackage
-};
+module.exports = { getPackages, purchasePackage };

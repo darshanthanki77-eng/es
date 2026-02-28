@@ -10,7 +10,7 @@ const getPackages = asyncHandler(async (req, res) => {
     res.json({ success: true, packages });
 });
 
-// @desc    Purchase & instantly activate a package (one-time, no pending)
+// @desc    Purchase & instantly activate a package (each type can only be bought ONCE)
 // @route   POST /api/packages/purchase
 // @access  Private
 const purchasePackage = asyncHandler(async (req, res) => {
@@ -42,11 +42,15 @@ const purchasePackage = asyncHandler(async (req, res) => {
         throw new Error('Invalid package selected');
     }
 
-    // 3. Block if seller already has an ACTIVE package of ANY type
-    const existingActive = await Package.findOne({ seller_id: sellerId, status: 1 });
-    if (existingActive) {
+    // 3. Block if seller has already purchased THIS SPECIFIC package (any status)
+    //    Each package type can only be bought ONE TIME per seller — ever.
+    const alreadyPurchased = await Package.findOne({
+        seller_id: sellerId,
+        type: pkg.name   // match by package name/type
+    });
+    if (alreadyPurchased) {
         res.status(400);
-        throw new Error(`You already have an active package (${existingActive.type}). A seller can only hold one active package at a time.`);
+        throw new Error(`You have already purchased the ${pkg.name} package. Each package can only be bought once.`);
     }
 
     // 4. Check wallet balance
@@ -69,15 +73,14 @@ const purchasePackage = asyncHandler(async (req, res) => {
         amount: pkg.amount,
         profit: '0',
         product_limit: pkg.limit,
-        status: 1  // ✅ Directly ACTIVE — no pending, no admin approval
+        status: 1  // ✅ Directly ACTIVE — instant, no admin approval
     });
 
-    // 6. Balance is automatically reduced (wallet.js subtracts status:1 packages)
     const newBalance = balance - pkg.amount;
 
     res.status(200).json({
         success: true,
-        message: `🎉 ${pkg.name} activated successfully! You can now list up to ${pkg.limit === 1000000 ? 'unlimited' : pkg.limit} products.`,
+        message: `🎉 ${pkg.name} activated! You can now list up to ${pkg.limit === 1000000 ? 'unlimited' : pkg.limit} products.`,
         package: newPackage,
         wallet_balance: newBalance
     });

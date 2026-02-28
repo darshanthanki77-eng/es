@@ -30,6 +30,26 @@ const rechargeSchema = mongoose.Schema({
         type: String,
         default: null,
     },
+    payment_method: {
+        type: String,
+        default: 'crypto', // 'crypto' or 'bank'
+    },
+    sender_wallet: {
+        type: String,
+        default: '',
+    },
+    txn_hash: {
+        type: String,
+        default: '',
+    },
+    bank_reference: {
+        type: String,
+        default: '',
+    },
+    network: {
+        type: String,
+        default: '',
+    },
     created_at: {
         type: String,
         required: false

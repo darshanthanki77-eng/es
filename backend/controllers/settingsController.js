@@ -81,10 +81,45 @@ const updateCryptoSettings = asyncHandler(async (req, res) => {
     res.json({ success: true, message: 'Crypto payment settings updated', crypto: value });
 });
 
+// @desc    Get admin bank payment details (public - for sellers to see where to send)
+// @route   GET /api/settings/bank
+// @access  Public
+const getBankSettings = asyncHandler(async (req, res) => {
+    const setting = await SiteSetting.findOne({ key: 'bank_payment' });
+    res.json({
+        success: true,
+        bank: setting ? setting.value : {
+            bank_name: '',
+            account_name: '',
+            account_number: '',
+            ifsc_code: '',
+            branch: '',
+            swift_code: '',
+            note: 'Please include your registered email as payment reference',
+        }
+    });
+});
+
+// @desc    Update admin bank payment details
+// @route   PUT /api/settings/bank
+// @access  Private/Admin
+const updateBankSettings = asyncHandler(async (req, res) => {
+    const { bank_name, account_name, account_number, ifsc_code, branch, swift_code, note } = req.body;
+    const value = { bank_name, account_name, account_number, ifsc_code, branch, swift_code, note };
+    await SiteSetting.findOneAndUpdate(
+        { key: 'bank_payment' },
+        { key: 'bank_payment', value },
+        { upsert: true, new: true }
+    );
+    res.json({ success: true, message: 'Bank settings updated', bank: value });
+});
+
 module.exports = {
     getInvitationCode,
     updateInvitationCode,
     rotateCode,
     getCryptoSettings,
-    updateCryptoSettings
+    updateCryptoSettings,
+    getBankSettings,
+    updateBankSettings
 };

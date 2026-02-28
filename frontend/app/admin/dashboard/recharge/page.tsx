@@ -19,6 +19,7 @@ export default function AdminRechargePage() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [rejectModal, setRejectModal] = useState<{ id: string } | null>(null);
     const [rejectReason, setRejectReason] = useState('');
+    const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
     const fetchRecharges = useCallback(async () => {
         setLoading(true);
@@ -80,10 +81,10 @@ export default function AdminRechargePage() {
                 borderRadius: '16px', overflow: 'hidden'
             }}>
                 <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '750px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '820px' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                                {['#', 'Seller', 'Amount', 'Mode', 'Receipt', 'Status', 'Date', 'Actions'].map(h => (
+                                {['#', 'Seller', 'Amount', 'Method', 'Status', 'Date', 'Proof', 'Actions'].map(h => (
                                     <th key={h} style={{
                                         padding: '14px 16px', textAlign: 'left', fontSize: '11px',
                                         fontWeight: '700', color: 'rgba(255,255,255,0.4)',
@@ -100,76 +101,117 @@ export default function AdminRechargePage() {
                             ) : recharges.map((r, i) => {
                                 const s = STATUS_MAP[r.status] || STATUS_MAP[0];
                                 return (
-                                    <tr key={r._id}
-                                        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                                    >
-                                        <td style={{ padding: '14px 16px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>{(page - 1) * 20 + i + 1}</td>
-                                        <td style={{ padding: '14px 16px' }}>
-                                            <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                                                {r.seller_id?.name || r.seller?.name || 'Unknown'}
-                                            </div>
-                                            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
-                                                {r.seller_id?.email || r.seller?.email || ''}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '14px 16px', fontWeight: '700', color: '#10b981', fontSize: '16px' }}>
-                                            ₹{parseFloat(r.amount || '0').toFixed(2)}
-                                        </td>
-                                        <td style={{ padding: '14px 16px', color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>{r.mode || '—'}</td>
-                                        <td style={{ padding: '14px 16px' }}>
-                                            {r.receipt ? (
-                                                <a href={r.receipt} target="_blank" rel="noreferrer" style={{
-                                                    color: '#818cf8', fontSize: '12px', fontWeight: '600', textDecoration: 'none'
-                                                }}>View</a>
-                                            ) : <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>None</span>}
-                                        </td>
-                                        <td style={{ padding: '14px 16px' }}>
-                                            <span style={{
-                                                padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600',
-                                                background: s.bg, border: `1px solid ${s.border}`, color: s.color
-                                            }}>{s.label}</span>
-                                        </td>
-                                        <td style={{ padding: '14px 16px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
-                                            {r.created_at ? new Date(r.created_at).toLocaleDateString() :
-                                                r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}
-                                        </td>
-                                        <td style={{ padding: '14px 16px' }}>
-                                            {r.status === 0 ? (
-                                                <div style={{ display: 'flex', gap: '6px' }}>
-                                                    <button
-                                                        onClick={() => handleStatus(r._id, 1)}
-                                                        disabled={actionLoading === r._id}
-                                                        style={{
-                                                            background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)',
-                                                            borderRadius: '8px', padding: '6px 10px', cursor: 'pointer',
-                                                            color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px',
-                                                            fontSize: '12px', fontWeight: '600'
-                                                        }}
-                                                    >
-                                                        <CheckCircle size={13} /> Approve
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setRejectModal({ id: r._id })}
-                                                        disabled={actionLoading === r._id}
-                                                        style={{
-                                                            background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)',
-                                                            borderRadius: '8px', padding: '6px 10px', cursor: 'pointer',
-                                                            color: '#f87171', display: 'flex', alignItems: 'center', gap: '4px',
-                                                            fontSize: '12px', fontWeight: '600'
-                                                        }}
-                                                    >
-                                                        <XCircle size={13} /> Reject
-                                                    </button>
+                                    <>
+                                        <tr key={r._id}
+                                            style={{ borderBottom: expandedRow === r._id ? 'none' : '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                        >
+                                            <td style={{ padding: '14px 16px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>{(page - 1) * 20 + i + 1}</td>
+                                            <td style={{ padding: '14px 16px' }}>
+                                                <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                                    {r.seller_id?.name || r.seller?.name || 'Unknown'}
                                                 </div>
-                                            ) : (
-                                                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>
-                                                    {r.reason || 'Done'}
+                                                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                                                    {r.seller_id?.email || r.seller?.email || ''}
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '14px 16px', fontWeight: '700', color: '#10b981', fontSize: '16px' }}>
+                                                ${parseFloat(r.amount || '0').toFixed(2)}
+                                            </td>
+                                            <td style={{ padding: '14px 16px' }}>
+                                                <span style={{
+                                                    padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '700',
+                                                    background: r.payment_method === 'bank' ? 'rgba(59,130,246,0.15)' : 'rgba(99,102,241,0.15)',
+                                                    border: `1px solid ${r.payment_method === 'bank' ? 'rgba(59,130,246,0.3)' : 'rgba(99,102,241,0.3)'}`,
+                                                    color: r.payment_method === 'bank' ? '#60a5fa' : '#a5b4fc'
+                                                }}>
+                                                    {r.payment_method === 'bank' ? '🏦 Bank' : '₿ Crypto'}
                                                 </span>
-                                            )}
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td style={{ padding: '14px 16px' }}>
+                                                <span style={{
+                                                    padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600',
+                                                    background: s.bg, border: `1px solid ${s.border}`, color: s.color
+                                                }}>{s.label}</span>
+                                            </td>
+                                            <td style={{ padding: '14px 16px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+                                                {r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) :
+                                                    r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}
+                                            </td>
+                                            <td style={{ padding: '14px 16px' }}>
+                                                <button onClick={() => setExpandedRow(expandedRow === r._id ? null : r._id)} style={{
+                                                    background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)',
+                                                    borderRadius: '8px', padding: '5px 10px', color: '#a5b4fc',
+                                                    cursor: 'pointer', fontSize: '12px', fontWeight: '600'
+                                                }}>
+                                                    {expandedRow === r._id ? '▲ Hide' : '▼ Proof'}
+                                                </button>
+                                            </td>
+                                            <td style={{ padding: '14px 16px' }}>
+                                                {r.status === 0 ? (
+                                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                                        <button
+                                                            onClick={() => handleStatus(r._id, 1)}
+                                                            disabled={actionLoading === r._id}
+                                                            style={{
+                                                                background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)',
+                                                                borderRadius: '8px', padding: '6px 10px', cursor: 'pointer',
+                                                                color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px',
+                                                                fontSize: '12px', fontWeight: '600'
+                                                            }}
+                                                        >
+                                                            <CheckCircle size={13} /> Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setRejectModal({ id: r._id })}
+                                                            disabled={actionLoading === r._id}
+                                                            style={{
+                                                                background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)',
+                                                                borderRadius: '8px', padding: '6px 10px', cursor: 'pointer',
+                                                                color: '#f87171', display: 'flex', alignItems: 'center', gap: '4px',
+                                                                fontSize: '12px', fontWeight: '600'
+                                                            }}
+                                                        >
+                                                            <XCircle size={13} /> Reject
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>
+                                                        {r.reason || 'Done'}
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                        {/* Expandable proof row */}
+                                        {expandedRow === r._id && (
+                                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <td colSpan={8} style={{ padding: '0 16px 16px 48px' }}>
+                                                    <div style={{
+                                                        background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)',
+                                                        borderRadius: '12px', padding: '16px',
+                                                        display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px'
+                                                    }}>
+                                                        <div style={{ fontSize: '11px', fontWeight: '700', color: 'rgba(255,255,255,0.4)', gridColumn: '1 / -1', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Payment Proof Details</div>
+                                                        {[
+                                                            { label: 'Sender Wallet / From', value: r.sender_wallet },
+                                                            { label: 'Transaction Hash / TxID', value: r.txn_hash },
+                                                            { label: 'Bank UTR / Reference', value: r.bank_reference },
+                                                            { label: 'Network', value: r.network },
+                                                        ].map(field => field.value ? (
+                                                            <div key={field.label}>
+                                                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>{field.label}</div>
+                                                                <div style={{ color: 'white', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all', fontWeight: '600' }}>{field.value}</div>
+                                                            </div>
+                                                        ) : null)}
+                                                        {!r.sender_wallet && !r.txn_hash && !r.bank_reference && (
+                                                            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>No proof submitted yet</div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 );
                             })}
                         </tbody>

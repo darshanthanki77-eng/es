@@ -219,26 +219,83 @@
     animation: spin 1s linear infinite, pulse 2s ease-in-out infinite;
   }
 
-  /* Scrollbar Styling - Enhanced */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+  /* =============================================
+     GLOBAL SCROLLBAR — Applied to EVERYTHING
+     ============================================= */
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.6) transparent;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-gray-100/50 rounded-full;
-    backdrop-filter: blur(10px);
+  /* Chrome / Safari / Edge */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    @apply rounded-full;
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 100px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #818cf8 0%, #6366f1 50%, #a855f7 100%);
+    border-radius: 100px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
   }
 
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #a5b4fc 0%, #818cf8 50%, #c084fc 100%);
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Modal / white background scrollbar — lighter pill */
+  .modal-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .modal-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 100px;
+    margin: 12px 0;
+  }
+
+  .modal-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #c7d2fe 0%, #a5b4fc 100%);
+    border-radius: 100px;
+  }
+
+  .modal-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #818cf8 0%, #6366f1 100%);
+    box-shadow: 0 0 6px rgba(99, 102, 241, 0.4);
+  }
+
+  /* Legacy class kept for backwards compat */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 100px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #818cf8 0%, #6366f1 100%);
+    border-radius: 100px;
+  }
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+    background: linear-gradient(180deg, #a5b4fc 0%, #818cf8 100%);
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
   }
 
   /* Dark Font Utility */

@@ -163,7 +163,7 @@ export default function DepositPage() {
                 {showPayment && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={() => payStep === 'details' && setShowPayment(false)} />
-                        <div className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+                        <div className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 modal-scroll" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
 
                             {/* ---- PAYMENT DETAILS STEP ---- */}
                             {payStep === 'details' && (

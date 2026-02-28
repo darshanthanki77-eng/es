@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
     LayoutDashboard, Users, Package, CreditCard, ArrowDownCircle,
-    ShoppingCart, Box, LogOut, Shield, Menu, X, ChevronRight
+    ShoppingCart, Box, LogOut, Shield, Menu, X, ChevronRight, Settings
 } from 'lucide-react';
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
     { label: 'Withdraw', icon: ArrowDownCircle, href: '/admin/dashboard/withdraw' },
     { label: 'Orders', icon: ShoppingCart, href: '/admin/dashboard/orders' },
     { label: 'Products', icon: Box, href: '/admin/dashboard/products' },
+    { label: 'Crypto Settings', icon: Settings, href: '/admin/dashboard/settings' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const pathname = usePathname();
     const [adminUser, setAdminUser] = useState<any>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+
 
     useEffect(() => {
         const token = localStorage.getItem('adminToken');

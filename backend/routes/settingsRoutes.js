@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { getInvitationCode, updateInvitationCode } = require('../controllers/settingsController');
-// Assuming we want to protect this, but for now making it public or semi-private as per existing pattern
-// Ideally should use 'protect' and 'admin' middleware
-const { protect } = require('../middleware/authMiddleware');
+const { getInvitationCode, updateInvitationCode, getCryptoSettings, updateCryptoSettings } = require('../controllers/settingsController');
+const { protect, admin } = require('../middleware/authMiddleware');
 
+// Invite code
 router.get('/invite-code', getInvitationCode);
 router.put('/invite-code', updateInvitationCode);
+
+// Crypto payment settings
+router.get('/crypto', getCryptoSettings);                         // Public: sellers fetch admin crypto address
+router.put('/crypto', protect, admin, updateCryptoSettings);      // Admin only: update wallet addresses
 
 module.exports = router;

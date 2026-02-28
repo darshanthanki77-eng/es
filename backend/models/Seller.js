@@ -80,6 +80,13 @@ const sellerSchema = mongoose.Schema({
     guarantee_balance: {
         type: Number,
         default: 0,
+    },
+    bank_details: {
+        bank_name: { type: String, default: '' },
+        account_number: { type: String, default: '' },
+        account_name: { type: String, default: '' },
+        ifsc_code: { type: String, default: '' },
+        upi_id: { type: String, default: '' },
     }
 }, {
     timestamps: true,

@@ -303,6 +303,7 @@ const getAllWithdrawals = asyncHandler(async (req, res) => {
         {
             $project: {
                 _id: 1, amount: 1, op_type: 1, status: 1, reason: 1, message: 1, createdAt: 1,
+                bank_details: 1, notes: 1,
                 seller: { name: '$seller_data.name', email: '$seller_data.email', shop_name: '$seller_data.shop_name' }
             }
         },
@@ -314,11 +315,18 @@ const getAllWithdrawals = asyncHandler(async (req, res) => {
     res.json({ success: true, withdrawals, total, page, pages: Math.ceil(total / limit) });
 });
 
-// @desc    Update withdrawal status
+// @desc    Update withdrawal status (Approve / Reject)
 // @route   PUT /api/admin/withdrawals/:id
 // @access  Private/Admin
 const updateWithdrawalStatus = asyncHandler(async (req, res) => {
     const { status, reason } = req.body;
+    const newStatus = Number(status);
+
+    if (![1, 2].includes(newStatus)) {
+        res.status(400);
+        throw new Error('Invalid status. Use 1 (approve) or 2 (reject)');
+    }
+
     const withdrawal = await Withdraw.findById(req.params.id);
 
     if (!withdrawal) {
@@ -326,11 +334,29 @@ const updateWithdrawalStatus = asyncHandler(async (req, res) => {
         throw new Error('Withdrawal not found');
     }
 
-    withdrawal.status = status;
+    if (withdrawal.status !== 0) {
+        res.status(400);
+        throw new Error('Only pending withdrawal requests can be approved or rejected');
+    }
+
+    // Set the new status (1=Approved, 2=Rejected)
+    withdrawal.status = newStatus;
     if (reason) withdrawal.reason = reason;
+
+    // If rejected, add reason as message too
+    if (newStatus === 2) {
+        withdrawal.message = reason ? `Rejected: ${reason}` : 'Rejected by admin';
+    } else {
+        withdrawal.message = 'Approved by admin. Amount will be transferred within 1-2 business days.';
+    }
+
     await withdrawal.save();
 
-    res.json({ success: true, withdrawal });
+    res.json({
+        success: true,
+        message: newStatus === 1 ? '✅ Withdrawal approved successfully' : '❌ Withdrawal rejected',
+        withdrawal
+    });
 });
 
 // ===================== ORDER MANAGEMENT ====================

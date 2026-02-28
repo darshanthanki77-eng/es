@@ -11,7 +11,7 @@ const withdrawSchema = mongoose.Schema({
         required: true,
     },
     op_type: {
-        type: Number, // 0 or 1, specific operation type context needed
+        type: Number, // 1 = Bank Transfer, 2 = USDT
         required: true,
     },
     message: {
@@ -26,6 +26,17 @@ const withdrawSchema = mongoose.Schema({
         type: String,
         required: false,
     },
+    bank_details: {
+        bank_name: { type: String, default: '' },
+        account_number: { type: String, default: '' },
+        account_name: { type: String, default: '' },
+        ifsc_code: { type: String, default: '' },
+        upi_id: { type: String, default: '' },
+    },
+    notes: {
+        type: String,
+        default: '',
+    }
 }, {
     timestamps: true,
 });

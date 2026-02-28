@@ -144,7 +144,7 @@ const payStorehouse = asyncHandler(async (req, res) => {
 
     // Verify Transaction Password
     const { trans_password } = req.body;
-    if (!seller.trans_password || seller.trans_password !== trans_password) {
+    if (!seller.trans_password || !(await seller.matchTransPassword(trans_password))) {
         res.status(401);
         throw new Error('Invalid transaction password');
     }

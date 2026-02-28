@@ -83,7 +83,7 @@ export default function PackagesPage() {
             });
 
             if (response.success) {
-                setMessage('Package activated successfully!');
+                setMessage(response.message || 'Package requested successfully! Pending Admin Approval.');
                 setTimeout(() => {
                     setIsModalOpen(false);
                     setMessage('');
@@ -234,7 +234,7 @@ export default function PackagesPage() {
                                 >
                                     {isSubmitting ? 'Verifying...' : 'Confirm Activation'}
                                 </button>
-                                <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-widest">Immediate activation upon successful payment</p>
+                                <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-widest">Requires admin approval upon purchase</p>
                             </div>
                         </div>
                     </div>

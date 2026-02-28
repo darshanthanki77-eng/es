@@ -90,14 +90,31 @@ sellerSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Encrypt password using bcrypt
-sellerSchema.pre('save', async function () {
-    if (!this.isModified('password')) {
-        return;
+// Match transaction password
+sellerSchema.methods.matchTransPassword = async function (enteredPassword) {
+    if (!this.trans_password || this.trans_password.trim() === '') return false;
+
+    // Check if it's plaintext (older records migration)
+    if (!this.trans_password.startsWith('$2a$') && !this.trans_password.startsWith('$2b$')) {
+        return enteredPassword === this.trans_password;
     }
 
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    return await bcrypt.compare(enteredPassword, this.trans_password);
+};
+
+// Encrypt password using bcrypt
+sellerSchema.pre('save', async function (next) {
+    if (this.isModified('password')) {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+    }
+
+    if (this.isModified('trans_password') && this.trans_password && this.trans_password.trim() !== '') {
+        const salt = await bcrypt.genSalt(10);
+        this.trans_password = await bcrypt.hash(this.trans_password, salt);
+    }
+
+    next();
 });
 
 const Seller = mongoose.model('Seller', sellerSchema);

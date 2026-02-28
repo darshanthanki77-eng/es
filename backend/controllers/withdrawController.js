@@ -67,42 +67,14 @@ const createWithdrawal = asyncHandler(async (req, res) => {
     }
 
     // 1. Verify Transaction Password
-    if (!seller.trans_password || seller.trans_password !== trans_password) {
+    if (!seller.trans_password || !(await seller.matchTransPassword(trans_password))) {
         res.status(400);
         throw new Error('Invalid transaction password');
     }
 
     // 2. Check Balance
-    // Logic duped from getWalletDetails - ideally should be a helper function
-    // Sales
-    const salesResult = await require('../models/Order').aggregate([
-        { $match: { seller_id: seller._id, status: { $regex: 'processing|shipped|completed|delivered', $options: 'i' } } },
-        { $group: { _id: null, total: { $sum: { $toDouble: '$order_total' } } } }
-    ]);
-    const totalSales = salesResult.length > 0 ? salesResult[0].total : 0;
-
-    // Recharges
-    const rechargeResult = await require('../models/Recharge').aggregate([
-        { $match: { seller_id: seller._id, status: 1 } },
-        { $group: { _id: null, total: { $sum: { $toDouble: '$amount' } } } }
-    ]);
-    const totalRecharge = rechargeResult.length > 0 ? rechargeResult[0].total : 0;
-
-    // Withdrawals (Pending + Approved)
-    const withdrawResult = await Withdraw.aggregate([
-        { $match: { seller_id: seller._id, status: { $in: [0, 1] } } }, // 0: Pending, 1: Approved
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-    const totalWithdraw = withdrawResult.length > 0 ? withdrawResult[0].total : 0;
-
-    // 4. Storehouse Payments (NEW)
-    const storehouseResult = await require('../models/StorehousePayment').aggregate([
-        { $match: { seller_id: seller._id, status: 'Completed' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-    const totalStorehousePaid = storehouseResult.length > 0 ? storehouseResult[0].total : 0;
-
-    const availableBalance = (totalSales + totalRecharge) - (totalWithdraw + totalStorehousePaid);
+    const { getAvailableBalance } = require('../utils/wallet');
+    const availableBalance = await getAvailableBalance(seller._id);
 
     if (amount > availableBalance) {
         res.status(400);
@@ -168,9 +140,9 @@ const getWalletDetails = asyncHandler(async (req, res) => {
     ]);
     const rechargeMoney = rechargeResult.length > 0 ? rechargeResult[0].total : 0;
 
-    // 2. Package Money (Total)
+    // 2. Package Money (Pending + Approved)
     const packageResult = await require('../models/Package').aggregate([
-        { $match: { seller_id: seller._id } },
+        { $match: { seller_id: seller._id, status: { $in: [0, 1] } } },
         { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
     const packageMoney = packageResult.length > 0 ? packageResult[0].total : 0;

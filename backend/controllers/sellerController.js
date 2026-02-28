@@ -47,7 +47,7 @@ exports.getDashboardStats = async (req, res) => {
         const guaranteeMoney = guaranteeResult.length > 0 ? guaranteeResult[0].total : 0;
 
         // 5. Package & Product Limits
-        const activePackage = await Package.findOne({ seller_id: seller._id }).sort({ created_at: -1 });
+        const activePackage = await Package.findOne({ seller_id: seller._id, status: 1 }).sort({ created_at: -1 });
         const productLimit = activePackage ? activePackage.product_limit : 0;
         const remainingProducts = Math.max(0, productLimit - totalProducts);
 
@@ -68,6 +68,9 @@ exports.getDashboardStats = async (req, res) => {
             { $group: { _id: "$category", count: { $sum: 1 } } }
         ]);
 
+        const { getAvailableBalance } = require('../utils/wallet');
+        const availableBalance = await getAvailableBalance(seller._id);
+
         res.status(200).json({
             success: true,
             stats: {
@@ -75,7 +78,7 @@ exports.getDashboardStats = async (req, res) => {
                 totalOrders,
                 totalSales,
                 guaranteeMoney: seller.guarantee_balance || guaranteeMoney,
-                mainWallet: seller.wallet_balance || 0,
+                mainWallet: availableBalance,
                 productLimit,
                 remainingProducts,
                 planName: activePackage ? activePackage.type : 'N/A',
@@ -376,7 +379,7 @@ exports.updateTransactionPassword = async (req, res) => {
 
         // If transaction password already exists, verify old password
         if (seller.trans_password && seller.trans_password.trim() !== '') {
-            if (seller.trans_password !== oldPassword) {
+            if (!(await seller.matchTransPassword(oldPassword))) {
                 return res.status(400).json({ success: false, message: 'Invalid original transaction password' });
             }
         }

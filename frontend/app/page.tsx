@@ -10,14 +10,7 @@ import {
 } from '@/components/dashboard/MetricCard';
 import SalesChart from '@/components/dashboard/SalesChart';
 import FeaturedProductsCarousel from '@/components/products/FeaturedProductsCarousel';
-import StoreHealthDashboard from '@/components/health/StoreHealthDashboard';
-import {
-    mockSalesStats,
-    mockChartData,
-    mockProducts,
-    mockStoreHealthScore
-} from '@/lib/mockData';
-import { TrendingUp, Package, Heart, Zap, Sparkles, Activity, ArrowUpRight, Globe, CheckCircle2, ShieldCheck, Star } from 'lucide-react';
+import { TrendingUp, Package, Zap, Sparkles, Activity, ArrowUpRight, Globe, CheckCircle2, ShieldCheck, Star } from 'lucide-react';
 import Shell from '@/components/layout/Shell';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
@@ -40,9 +33,8 @@ export default function DashboardPage() {
         netProfitMargin: 0,
     });
 
-    const [chartData, setChartData] = useState<any[]>([]);
+    const [chartData] = useState<any[]>([]);
     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
-    const [healthScore, setHealthScore] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -347,17 +339,5 @@ export default function DashboardPage() {
                 </footer>
             </div>
         </Shell>
-    );
-}
-
-function SalesChartIcon({ className }: { className?: string }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="m19 20-3.5-3.5" />
-            <path d="m2 2 10 10" />
-            <path d="m22 2-10 10" />
-            <path d="M20 16a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
-            <path d="M4 16a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
-        </svg>
     );
 }

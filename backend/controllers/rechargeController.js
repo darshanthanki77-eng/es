@@ -93,23 +93,19 @@ const completeRecharge = asyncHandler(async (req, res) => {
 
     if (recharge.status === 1) {
         res.status(400);
-        throw new Error('Recharge already completed');
+        throw new Error('Recharge already completed and approved');
     }
 
-    recharge.status = 1; // Success
-    await recharge.save();
+    // Leave the recharge status as 0 (Pending) to await admin approval workflow!
 
-    // Update seller wallet
-    const seller = await Seller.findById(recharge.seller_id);
-    if (seller) {
-        seller.wallet_balance = (seller.wallet_balance || 0) + Number(recharge.amount);
-        await seller.save();
-    }
+    // Get fresh balance dynamically
+    const { getAvailableBalance } = require('../utils/wallet');
+    const newBalance = await getAvailableBalance(recharge.seller_id);
 
     res.json({
         success: true,
-        message: 'Payment completed and wallet updated',
-        wallet_balance: seller ? seller.wallet_balance : 0
+        message: 'Recharge payment submitted successfully. Awaiting admin approval.',
+        wallet_balance: newBalance
     });
 });
 

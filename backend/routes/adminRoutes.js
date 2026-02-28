@@ -9,6 +9,7 @@ const {
     updateUser,
     deleteUser,
     getAllPackages,
+    updatePackageStatus,
     getAllRecharges,
     updateRechargeStatus,
     getAllWithdrawals,
@@ -39,6 +40,7 @@ router.delete('/users/:id', deleteUser);
 
 // Package Management
 router.get('/packages', getAllPackages);
+router.put('/packages/:id', updatePackageStatus);
 
 // Recharge Management
 router.get('/recharges', getAllRecharges);

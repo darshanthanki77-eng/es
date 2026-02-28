@@ -171,8 +171,8 @@ export default function DepositPage() {
                                         <CheckCircle2 className="w-12 h-12 text-white" />
                                     </div>
                                     <div className="space-y-2">
-                                        <h3 className="text-3xl font-black text-gray-900 leading-tight">Payment Completed!</h3>
-                                        <p className="text-sm text-success-600 font-bold">Funds are successfully added to your wallet.</p>
+                                        <h3 className="text-3xl font-black text-gray-900 leading-tight">Request Submitted!</h3>
+                                        <p className="text-sm text-success-600 font-bold">Your recharge is now pending admin approval. Funds will appear once approved.</p>
                                     </div>
                                     <p className="text-xs text-gray-400">Redirecting to dashboard...</p>
                                 </div>

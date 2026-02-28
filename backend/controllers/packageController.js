@@ -33,7 +33,7 @@ const purchasePackage = asyncHandler(async (req, res) => {
 
     // 1. Verify Transaction Password (Must match registration password)
     // Use seller.trans_password which is stored during signup
-    if (!seller.trans_password || seller.trans_password !== trans_password) {
+    if (!seller.trans_password || !(await seller.matchTransPassword(trans_password))) {
         res.status(400);
         throw new Error('Invalid transaction password. Please use the password you set during registration.');
     }
@@ -52,7 +52,9 @@ const purchasePackage = asyncHandler(async (req, res) => {
     }
 
     // 3. Confirm Wallet Balance
-    const balance = seller.wallet_balance || 0;
+    const { getAvailableBalance } = require('../utils/wallet');
+    const balance = await getAvailableBalance(seller._id);
+
     if (balance < pkg.amount) {
         res.status(400);
         throw new Error(`Insufficient funds. Plan cost is $${pkg.amount}, but your wallet has $${balance.toFixed(2)}.`);
@@ -70,17 +72,17 @@ const purchasePackage = asyncHandler(async (req, res) => {
             type: pkg.name,
             amount: pkg.amount,
             profit: '0',
-            product_limit: pkg.limit
+            product_limit: pkg.limit,
+            status: 0 // Pending Admin Approval
         });
 
-        // Deduct from Wallet
-        seller.wallet_balance = balance - pkg.amount;
-        await seller.save();
+        // The balance will dynamically lower since pending packages are subtracted from available balance
+        const newBalance = balance - pkg.amount;
 
         res.status(200).json({
             success: true,
-            message: `${pkg.name} activated successfully and $${pkg.amount} deducted.`,
-            wallet_balance: seller.wallet_balance
+            message: `${pkg.name} package requested successfully. Waiting for admin approval.`,
+            wallet_balance: newBalance
         });
     } catch (error) {
         console.error('Package Purchase Error:', error);

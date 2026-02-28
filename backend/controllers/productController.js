@@ -279,7 +279,7 @@ const addToMyStore = asyncHandler(async (req, res) => {
 
     // Check the seller's plan product limit
     const Package = require('../models/Package');
-    const latestPackage = await Package.findOne({ seller_id: sellerId }).sort({ created_at: -1 });
+    const latestPackage = await Package.findOne({ seller_id: sellerId, status: 1 }).sort({ created_at: -1 });
     const productLimit = latestPackage ? latestPackage.product_limit : 10; // Default free plan = 10
 
     if (currentCount >= productLimit) {

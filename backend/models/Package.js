@@ -7,6 +7,8 @@ const packageSchema = new mongoose.Schema({
     amount: { type: Number },
     profit: { type: String, required: true },
     product_limit: { type: Number, required: true },
-}, { timestamps: { createdAt: 'created_at', updatedAt: false } });
+    status: { type: Number, default: 0 }, // 0=Pending, 1=Approved, 2=Rejected
+    reason: { type: String, default: '' },
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 module.exports = mongoose.model('Package', packageSchema);

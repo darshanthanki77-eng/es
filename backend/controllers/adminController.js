@@ -197,6 +197,7 @@ const getAllPackages = asyncHandler(async (req, res) => {
         {
             $project: {
                 _id: 1, id: 1, type: 1, amount: 1, profit: 1, product_limit: 1, created_at: 1,
+                status: 1, reason: 1,
                 seller: { name: '$seller_data.name', email: '$seller_data.email', shop_name: '$seller_data.shop_name' }
             }
         },
@@ -206,6 +207,25 @@ const getAllPackages = asyncHandler(async (req, res) => {
     ]);
 
     res.json({ success: true, packages, total, page, pages: Math.ceil(total / limit) });
+});
+
+// @desc    Update package status
+// @route   PUT /api/admin/packages/:id
+// @access  Private/Admin
+const updatePackageStatus = asyncHandler(async (req, res) => {
+    const { status, reason } = req.body;
+    const pkg = await Package.findById(req.params.id);
+
+    if (!pkg) {
+        res.status(404);
+        throw new Error('Package not found');
+    }
+
+    pkg.status = status;
+    if (reason) pkg.reason = reason;
+    await pkg.save();
+
+    res.json({ success: true, package: pkg });
 });
 
 // ===================== RECHARGE MANAGEMENT ====================
@@ -705,6 +725,7 @@ module.exports = {
     updateUser,
     deleteUser,
     getAllPackages,
+    updatePackageStatus,
     getAllRecharges,
     updateRechargeStatus,
     getAllWithdrawals,

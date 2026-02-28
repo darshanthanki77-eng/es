@@ -38,11 +38,20 @@ export default function WithdrawPage() {
     const fetchWalletDetails = async () => {
         setIsLoading(true);
         try {
-            const response = await api.get('/withdrawals/wallet-details/info');
-            if (response.success) {
-                setWalletData(response.data);
-                if (response.data.bank_details) {
-                    const bd = response.data.bank_details;
+            // Fetch real wallet balance from stats (same as header wallet)
+            const [walletRes, statsRes] = await Promise.all([
+                api.get('/withdrawals/wallet-details/info'),
+                api.get('/sellers/stats')
+            ]);
+
+            if (walletRes.success) {
+                const realBalance = statsRes?.success ? (statsRes.stats?.mainWallet ?? walletRes.data.balance) : walletRes.data.balance;
+                setWalletData({
+                    ...walletRes.data,
+                    balance: realBalance
+                });
+                if (walletRes.data.bank_details) {
+                    const bd = walletRes.data.bank_details;
                     if (bd.bank_name || bd.account_number || bd.upi_id) {
                         setBankDetails(bd);
                     }
@@ -215,8 +224,6 @@ export default function WithdrawPage() {
                                                     value={amount}
                                                     onChange={(e) => setAmount(e.target.value)}
                                                     placeholder="0.00"
-                                                    min="100"
-                                                    max={walletData?.balance || 0}
                                                     className="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                                                 />
                                             </div>

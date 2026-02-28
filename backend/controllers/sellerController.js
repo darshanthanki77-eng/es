@@ -8,6 +8,7 @@ const GuaranteeMoney = require('../models/GuaranteeMoney');
 const SellerProduct = require('../models/SellerProduct');
 const ShopProfile = require('../models/ShopProfile');
 const Package = require('../models/Package');
+const { getAvailableBalance } = require('../utils/wallet');
 
 // @desc    Get seller dashboard statistics
 // @route   GET /api/sellers/stats
@@ -69,7 +70,6 @@ exports.getDashboardStats = async (req, res) => {
             { $group: { _id: "$category", count: { $sum: 1 } } }
         ]);
 
-        const { getAvailableBalance } = require('../utils/wallet');
         const availableBalance = await getAvailableBalance(seller._id);
 
         res.status(200).json({

@@ -37,7 +37,7 @@ const updateRechargeStatus = asyncHandler(async (req, res) => {
     const recharge = await Recharge.findById(req.params.id);
 
     if (recharge) {
-        recharge.status = status; // 1 = approved, 2 = rejected
+        recharge.status = Number(status); // Always a Number, not string
         if (reason) recharge.reason = reason;
 
         const updatedRecharge = await recharge.save();

@@ -264,7 +264,8 @@ const updateRechargeStatus = asyncHandler(async (req, res) => {
         throw new Error('Recharge not found');
     }
 
-    recharge.status = status;
+    // Always store status as Number (not string) so wallet balance query matches correctly
+    recharge.status = Number(status);
     if (reason) recharge.reason = reason;
     await recharge.save();
 
